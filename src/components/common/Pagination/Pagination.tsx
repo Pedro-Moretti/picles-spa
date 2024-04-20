@@ -11,12 +11,13 @@ export function Pagination({ currentPage, totalPages, onPageChange}: IPagination
 
     return (
         <nav>
-            <ul className={styles.Pagination}></ul>
+            <ul className={styles.pagination}>
                 {pageNumber.map((number) => (
                     <li key={number} className={`${currentPage === number ? styles.active : null}`}>
                         <button onClick={() => onPageChange(number)}>{number}</button>
                     </li>
                 ))}
+            </ul>
         </nav>
     )
 }
