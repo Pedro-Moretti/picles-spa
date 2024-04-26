@@ -17,3 +17,5 @@ export type GetPetsResponse = {
     totalPages: number
     currentPage: number
 }
+
+export type AddPetRequest = Omit<IPet, 'id' | 'photo'>

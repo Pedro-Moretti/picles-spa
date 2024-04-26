@@ -1,7 +1,7 @@
 import { Panel } from "../../../components/layout/Panel";
 import { Input } from "../../../components/common/Input/Input";
 import styles from './Shelter.module.css'
-import { Button } from "../../../components/common/Button";
+import { Button, ButtonVariant } from "../../../components/common/Button";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,6 +9,9 @@ import { useHookFormMask } from "use-mask-input";
 import { toast } from "sonner";
 import { updateShelter } from "../../../services/shelter/updateShelter";
 import { useQueryClient } from "@tanstack/react-query";
+import { useShelter } from "../../../hooks/useShelter";
+import { useEffect } from "react";
+import Skeleton from "react-loading-skeleton";
 
 const shelterSchema = z.object({
     name: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres.').max(30, 'Nome deve ter no máximo 30 caracteres.'),
@@ -26,11 +29,23 @@ const shelterSchema = z.object({
 type ShelterSchema = z.infer<typeof shelterSchema>
 
 export function Shelter() {
-    const { handleSubmit, register, formState } = useForm<ShelterSchema>({
+    const { handleSubmit, register, formState, reset } = useForm<ShelterSchema>({
         resolver: zodResolver(shelterSchema),
     })
     const registerWithMask = useHookFormMask(register)
     const queryClient = useQueryClient()
+    const { data, isLoading } = useShelter()
+
+    useEffect(() => {
+        if (!isLoading && data) {
+            reset ({
+                name: data.shelterName,
+                email: data.shelterEmail,
+                phone: data.shelterPhone,
+                whatsApp: data.shelterWhatsApp,
+            })
+        }
+    }, [data, isLoading, reset])
 
     async function submit({ name, email, phone, whatsApp }: ShelterSchema) {
         const toastId = toast.loading('Salvando dados')
@@ -42,7 +57,7 @@ export function Shelter() {
                 whatsApp: whatsApp.replace(/\D/g, '') 
             })
             queryClient.invalidateQueries({ queryKey: ['get-shelter'] })
-            
+
             toast.success('Dados salvos com sucesso', {
                 id: toastId,
                 closeButton: true,
@@ -57,6 +72,7 @@ export function Shelter() {
 
     return (
         <Panel>
+            {isLoading && <Skeleton count={4} width={320} height={32} style={{ gap: '' }} />}
             <form className={styles.container} onSubmit={handleSubmit(submit)}>
                 <div>
                     <Input label="Nome" {...register('name')} />
@@ -82,7 +98,11 @@ export function Shelter() {
                         <p className={styles.formError}>{formState.errors.whatsApp.message}</p>
                     )}
                 </div>
-                <Button type="submit">Salvar dados</Button>
+                <Button type="submit" variant={
+                    !formState.isDirty || formState.isSubmitting
+                        ? ButtonVariant.Disabled
+                        : ButtonVariant.Default
+                }>Salvar dados</Button>
             </form>
         </Panel>
     )
